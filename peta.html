@@ -1,0 +1,2013 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Peta Fasilitas Kesehatan - Kota Medan</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+ 
+  :root {
+    --primary-soft: #fff5f7;
+    --primary-light: #ffd6e0;
+    --primary-main: #ff8fab;
+    --primary-vibrant: #fb6f92;
+    --primary-deep: #c9184a;
+    
+    --rsu: #ffadad;
+    --klinik: #a7c7e7;
+    --puskesmas: #b8e6b8;
+    
+    --route-color: #4ade80;
+    --route-glow: rgba(74, 222, 128, 0.4);
+    
+    --density-high: #dc2626;
+    --density-medium: #f59e0b;
+    --density-low: #10b981;
+    
+    --bg-gradient: linear-gradient(135deg, #fff5f7 0%, #ffeef2 50%, #fff0f5 100%);
+    --surface: rgba(255, 255, 255, 0.92);
+    --surface-glass: rgba(255, 255, 255, 0.75);
+    --text: #2d1f2a;
+    --text-muted: #7a6b75;
+    --border: rgba(201, 24, 74, 0.15);
+    --shadow-soft: 0 4px 20px rgba(201, 24, 74, 0.08);
+    --shadow-hover: 0 8px 32px rgba(201, 24, 74, 0.15);
+    --shadow-glow: 0 0 20px rgba(251, 111, 146, 0.3);
+    
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-fast: all 0.15s ease;
+    --radius: 16px;
+    --radius-lg: 24px;
+  }
+ 
+  html, body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg-gradient);
+    color: var(--text);
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+  }
+ 
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-image: 
+      radial-gradient(circle at 20% 80%, rgba(251, 111, 146, 0.08) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(255, 159, 171, 0.08) 0%, transparent 50%),
+      radial-gradient(circle at 50% 50%, rgba(255, 214, 224, 0.05) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+    animation: floatBg 20s ease-in-out infinite;
+  }
+  
+  @keyframes floatBg {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-10px) scale(1.02); }
+  }
+ 
+  body { 
+    display: flex; 
+    flex-direction: column; 
+    position: relative;
+    z-index: 1;
+  }
+ 
+  .main { 
+    display: flex; 
+    flex: 1; 
+    min-height: 0; 
+    overflow: hidden;
+    padding: 12px;
+    gap: 12px;
+  }
+ 
+  .sidebar {
+    width: 320px;
+    background: var(--surface-glass);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    display: flex; 
+    flex-direction: column;
+    overflow: hidden; 
+    flex-shrink: 0;
+    box-shadow: var(--shadow-soft);
+    transition: var(--transition);
+    height: calc(100vh - 24px);
+  }
+  
+  .sidebar:hover {
+    box-shadow: var(--shadow-hover);
+    transform: translateY(-2px);
+  }
+ 
+  .sidebar-header {
+    flex-shrink: 0;
+    padding: 16px 20px;
+    text-align: center;
+    background: linear-gradient(135deg, rgba(255,245,247,0.95), rgba(255,255,255,0.85));
+    border-bottom: 1px solid var(--border);
+  }
+  
+  .brand-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--primary-deep);
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  
+  .brand-title svg {
+    width: 20px;
+    height: 20px;
+  }
+  
+  .brand-subtitle {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+  
+  .location-section {
+    flex-shrink: 0;
+    padding: 12px 20px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+  
+  .location-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 11px 14px;
+    background: linear-gradient(135deg, var(--primary-main), var(--primary-vibrant));
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    margin-bottom: 8px;
+    box-shadow: 0 4px 16px rgba(251, 111, 146, 0.4);
+  }
+  
+  .location-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 24px rgba(251, 111, 146, 0.6);
+  }
+  
+  .location-btn:active {
+    transform: translateY(0);
+  }
+  
+  .location-btn svg {
+    width: 16px;
+    height: 16px;
+  }
+  
+  .location-btn.loading {
+    opacity: 0.7;
+    cursor: wait;
+  }
+  
+  .location-status {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-align: center;
+    min-height: 16px;
+  }
+  
+  .location-status.error {
+    color: var(--primary-deep);
+  }
+  
+  .location-status.success {
+    color: var(--primary-vibrant);
+    font-weight: 500;
+  }
+  
+  .search-section {
+    flex-shrink: 0;
+    padding: 12px 20px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+  
+  .section-label {
+    font-size: 10px; 
+    font-weight: 700; 
+    letter-spacing: 1.2px;
+    text-transform: uppercase; 
+    color: var(--primary-deep);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  
+  .section-label::before {
+    content: '';
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background: var(--primary-vibrant);
+    border-radius: 50%;
+  }
+  
+  .search-wrap { position: relative; }
+ 
+  .search-wrap input {
+    width: 100%; 
+    padding: 11px 14px 11px 40px;
+    background: var(--primary-soft); 
+    border: 2px solid transparent;
+    border-radius: 12px; 
+    color: var(--text); 
+    font-size: 13px;
+    font-family: 'DM Sans', sans-serif; 
+    outline: none; 
+    transition: var(--transition);
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.03);
+  }
+ 
+  .search-wrap input:focus { 
+    border-color: var(--primary-vibrant); 
+    background: #fff;
+    box-shadow: var(--shadow-glow);
+    transform: translateY(-1px);
+  }
+  
+  .search-wrap input::placeholder { 
+    color: var(--text-muted); 
+    font-weight: 400;
+  }
+ 
+  .search-icon {
+    position: absolute; 
+    left: 13px; 
+    top: 50%;
+    transform: translateY(-50%); 
+    color: var(--primary-vibrant); 
+    font-size: 15px; 
+    pointer-events: none;
+    transition: var(--transition);
+  }
+  
+  .search-wrap input:focus + .search-icon,
+  .search-wrap input:not(:placeholder-shown) + .search-icon {
+    color: var(--primary-deep);
+    transform: translateY(-50%) scale(1.1);
+  }
+ 
+  .filter-section {
+    flex-shrink: 0;
+    padding: 12px 20px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+  
+  .filter-dropdown {
+    position: relative;
+  }
+  
+  .filter-dropdown-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 12px 16px;
+    background: linear-gradient(135deg, rgba(251,111,146,0.15), rgba(255,245,247,0.9));
+    border: 2px solid var(--primary-vibrant);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: var(--transition);
+    font-weight: 600;
+    color: var(--primary-deep);
+    font-size: 13px;
+  }
+  
+  .filter-dropdown-trigger:hover {
+    box-shadow: var(--shadow-glow);
+    transform: translateY(-1px);
+  }
+  
+  .filter-dropdown-trigger.active {
+    border-color: var(--primary-deep);
+    background: linear-gradient(135deg, rgba(251,111,146,0.25), rgba(255,245,247,0.95));
+  }
+  
+  .filter-dropdown-trigger svg {
+    width: 16px;
+    height: 16px;
+    transition: var(--transition-fast);
+  }
+  
+  .filter-dropdown-trigger.active svg {
+    transform: rotate(180deg);
+  }
+  
+  .filter-dropdown-content {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    right: 0;
+    background: var(--surface);
+    border: 2px solid var(--primary-light);
+    border-radius: 12px;
+    box-shadow: var(--shadow-hover);
+    z-index: 100;
+    overflow: hidden;
+    display: none;
+    animation: slideDown 0.3s ease;
+  }
+  
+  .filter-dropdown-content.show {
+    display: block;
+  }
+  
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .filter-option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 11px 16px;
+    cursor: pointer;
+    transition: var(--transition-fast);
+    border-bottom: 1px solid var(--primary-soft);
+    font-size: 12px;
+    color: var(--text);
+  }
+  
+  .filter-option:last-child {
+    border-bottom: none;
+  }
+  
+  .filter-option:hover {
+    background: var(--primary-soft);
+  }
+  
+  .filter-option.active {
+    background: linear-gradient(135deg, rgba(251,111,146,0.15), rgba(255,245,247,0.9));
+    color: var(--primary-deep);
+    font-weight: 600;
+  }
+  
+  .filter-option-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .filter-option-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  
+  .filter-option-count {
+    background: linear-gradient(135deg, var(--primary-main), var(--primary-vibrant));
+    color: white;
+    padding: 2px 9px;
+    border-radius: 18px;
+    font-size: 10px;
+    font-weight: 700;
+    box-shadow: 0 2px 8px rgba(251, 111, 146, 0.4);
+  }
+ 
+  .sidebar-list-area {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 12px 16px 16px;
+    min-height: 0;
+  }
+  
+  .sidebar-list-area::-webkit-scrollbar { 
+    width: 14px;
+  }
+  
+  .sidebar-list-area::-webkit-scrollbar-track { 
+    background: rgba(255, 214, 224, 0.4);
+    border-radius: 12px;
+    margin: 3px;
+  }
+  
+  .sidebar-list-area::-webkit-scrollbar-thumb { 
+    background: linear-gradient(180deg, var(--primary-light), var(--primary-main)); 
+    border-radius: 12px;
+    border: 3px solid rgba(255, 255, 255, 0.6);
+    min-height: 80px;
+  }
+  
+  .sidebar-list-area::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, var(--primary-main), var(--primary-vibrant));
+    border-color: var(--primary-light);
+  }
+  
+  .sidebar-list-area {
+    scrollbar-width: thin;
+    scrollbar-color: var(--primary-main) rgba(255, 214, 224, 0.4);
+  }
+  
+  .list-section {
+    background: var(--surface);
+    border-radius: 14px;
+    padding: 14px 16px;
+    border: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+ 
+  .sort-section {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    padding: 0 2px;
+    flex-shrink: 0;
+  }
+  
+  .sort-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 11px;
+    background: var(--primary-soft);
+    border: 1px solid var(--primary-light);
+    border-radius: 18px;
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--primary-deep);
+    cursor: pointer;
+    transition: var(--transition-fast);
+  }
+  
+  .sort-btn:hover, .sort-btn.active {
+    background: var(--primary-main);
+    color: white;
+    border-color: var(--primary-vibrant);
+  }
+  
+  .sort-btn svg {
+    width: 11px;
+    height: 11px;
+  }
+  
+  .list-header {
+    font-size: 10px; 
+    font-weight: 700; 
+    letter-spacing: 1.2px;
+    text-transform: uppercase; 
+    color: var(--primary-deep);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  
+  .list-header::before {
+    content: '';
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background: var(--primary-vibrant);
+    border-radius: 50%;
+  }
+ 
+  .list-wrap { 
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
+  }
+ 
+  .faskes-item {
+    padding: 12px 14px; 
+    border-radius: 12px; 
+    cursor: pointer;
+    transition: var(--transition); 
+    border: 2px solid transparent;
+    background: var(--surface);
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .faskes-item::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: linear-gradient(180deg, var(--primary-main), var(--primary-vibrant));
+    opacity: 0;
+    transition: var(--transition);
+  }
+ 
+  .faskes-item:hover { 
+    background: linear-gradient(135deg, #fff, var(--primary-soft));
+    border-color: var(--primary-light);
+    transform: translateX(3px);
+    box-shadow: var(--shadow-soft);
+  }
+  
+  .faskes-item:hover::before {
+    opacity: 1;
+  }
+  
+  .faskes-item.selected { 
+    background: linear-gradient(135deg, rgba(251,111,146,0.12), rgba(255,245,247,0.95)); 
+    border-color: var(--primary-vibrant);
+    box-shadow: var(--shadow-glow);
+  }
+  
+  .faskes-item.selected::before {
+    opacity: 1;
+    width: 4px;
+  }
+ 
+  .item-name { 
+    font-size: 12px; 
+    font-weight: 600; 
+    line-height: 1.4; 
+    margin-bottom: 5px;
+    color: var(--text);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  
+  .item-meta { 
+    display: flex; 
+    align-items: center; 
+    gap: 7px; 
+    font-size: 10px; 
+    color: var(--text-muted); 
+    flex-wrap: wrap;
+  }
+  
+  .item-badge { 
+    padding: 3px 9px; 
+    border-radius: 18px; 
+    font-size: 9px; 
+    font-weight: 700; 
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+    background: var(--primary-soft);
+    border: 1px solid var(--primary-light);
+    transition: var(--transition-fast);
+    display: flex;
+    align-items: center;
+    gap: 3px;
+  }
+  
+  .faskes-item:hover .item-badge {
+    background: var(--primary-main);
+    color: white;
+    border-color: var(--primary-vibrant);
+  }
+  
+  .item-badge svg {
+    width: 11px;
+    height: 11px;
+    flex-shrink: 0;
+  }
+  
+  .item-distance {
+    font-size: 9px;
+    color: var(--primary-vibrant);
+    font-weight: 600;
+    background: var(--primary-soft);
+    padding: 2px 7px;
+    border-radius: 11px;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+  }
+  
+  .item-distance svg {
+    width: 9px;
+    height: 9px;
+  }
+  
+  .no-result { 
+    text-align: center; 
+    padding: 24px 12px; 
+    color: var(--text-muted); 
+    font-size: 13px;
+    background: var(--primary-soft);
+    border-radius: 12px;
+    border: 2px dashed var(--primary-light);
+  }
+ 
+  .map-wrapper {
+    flex: 1; 
+    min-width: 0; 
+    min-height: 0;
+    position: relative; 
+    display: flex; 
+    flex-direction: column;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-soft);
+    border: 1px solid var(--border);
+    background: var(--surface);
+  }
+ 
+  #map { 
+    flex: 1; 
+    width: 100%; 
+    min-height: 0; 
+    border-radius: var(--radius-lg);
+  }
+ 
+  .leaflet-popup-content-wrapper {
+    background: var(--surface) !important;
+    border: 2px solid var(--primary-light) !important;
+    border-radius: 18px !important;
+    box-shadow: var(--shadow-hover) !important;
+    color: var(--text) !important;
+    overflow: hidden;
+  }
+ 
+  .leaflet-popup-tip { 
+    background: var(--surface) !important; 
+    border: 2px solid var(--primary-light) !important;
+    border-top: none !important;
+    border-left: none !important;
+  }
+  
+  .popup-inner { 
+    padding: 14px; 
+    min-width: 260px; 
+  }
+ 
+  .popup-type-badge {
+    display: inline-flex; 
+    align-items: center;
+    gap: 5px;
+    padding: 4px 12px; 
+    border-radius: 22px;
+    font-size: 9px; 
+    font-weight: 700; 
+    letter-spacing: 0.7px; 
+    margin-bottom: 9px;
+    text-transform: uppercase;
+    background: linear-gradient(135deg, var(--primary-main), var(--primary-vibrant));
+    color: white;
+    box-shadow: 0 4px 12px rgba(251, 111, 146, 0.4);
+    animation: slideIn 0.3s ease;
+  }
+  
+  .popup-type-badge svg {
+    width: 13px;
+    height: 13px;
+  }
+  
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+ 
+  .popup-name {
+    font-family: 'Syne', sans-serif; 
+    font-size: 15px; 
+    font-weight: 800;
+    line-height: 1.3; 
+    margin-bottom: 10px; 
+    color: var(--primary-deep);
+    text-shadow: 0 1px 0 rgba(255,255,255,0.5);
+  }
+ 
+  .popup-detail { 
+    display: flex; 
+    gap: 7px; 
+    font-size: 11px; 
+    color: var(--text-muted); 
+    margin-bottom: 5px; 
+    align-items: flex-start;
+    padding: 5px 0;
+    border-bottom: 1px dashed var(--primary-light);
+  }
+  
+  .popup-detail:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+  }
+  
+  .popup-detail-icon { 
+    flex-shrink: 0; 
+    margin-top: 1px;
+    font-size: 13px;
+    color: var(--primary-vibrant);
+  }
+  
+  .popup-detail-icon svg {
+    width: 13px;
+    height: 13px;
+    display: block;
+  }
+  
+  .popup-distance {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: linear-gradient(135deg, rgba(251,111,146,0.15), rgba(255,245,247,0.8));
+    padding: 5px 11px;
+    border-radius: 18px;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--primary-deep);
+    margin-top: 7px;
+    border: 1px solid var(--primary-light);
+  }
+  
+  .popup-distance svg {
+    width: 13px;
+    height: 13px;
+  }
+
+  .popup-density {
+    margin-top: 10px;
+    padding: 10px;
+    background: linear-gradient(135deg, rgba(255,245,247,0.9), rgba(255,255,255,0.95));
+    border-radius: 10px;
+    border-left: 4px solid var(--primary-vibrant);
+  }
+
+  .popup-density-title {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--primary-deep);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .density-stat {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+    font-size: 11px;
+  }
+
+  .density-stat-label {
+    color: var(--text-muted);
+  }
+
+  .density-stat-value {
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .density-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: 700;
+    margin-top: 6px;
+  }
+
+  .density-high { background: #fecaca; color: #dc2626; }
+  .density-medium { background: #fef3c7; color: #d97706; }
+  .density-low { background: #d1fae5; color: #059669; }
+
+  .analysis-box {
+    margin-top: 8px;
+    padding: 8px;
+    border-radius: 8px;
+    font-size: 10px;
+    font-weight: 600;
+    text-align: center;
+  }
+
+  .analysis-sesuai {
+    background: #d1fae5;
+    color: #059669;
+  }
+
+  .analysis-tidak-sesuai {
+    background: #fecaca;
+    color: #dc2626;
+  }
+ 
+  .legend-box {
+    position: absolute; 
+    bottom: 18px; 
+    right: 18px; 
+    z-index: 999;
+    background: var(--surface-glass);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--border);
+    border-radius: 16px; 
+    padding: 12px 16px; 
+    pointer-events: auto;
+    box-shadow: var(--shadow-hover);
+    transition: var(--transition);
+    min-width: 200px;
+  }
+  
+  .legend-box:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 40px rgba(201, 24, 74, 0.2);
+  }
+ 
+  .legend-title { 
+    font-size: 9px; 
+    font-weight: 700; 
+    letter-spacing: 1.3px; 
+    text-transform: uppercase; 
+    color: var(--primary-deep); 
+    margin-bottom: 9px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  
+  .legend-title::before {
+    content: '';
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background: var(--primary-vibrant);
+    border-radius: 50%;
+  }
+  
+  .legend-item { 
+    display: flex; 
+    align-items: center; 
+    gap: 9px; 
+    font-size: 11px; 
+    color: var(--text); 
+    margin-bottom: 6px;
+    padding: 3px 0;
+    transition: var(--transition-fast);
+  }
+  
+  .legend-item:hover {
+    transform: translateX(3px);
+    color: var(--primary-deep);
+  }
+  
+  .legend-dot { 
+    width: 18px; 
+    height: 18px; 
+    border-radius: 5px; 
+    flex-shrink: 0; 
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    position: relative;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  
+  .legend-dot svg {
+    width: 13px;
+    height: 13px;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,0.2));
+  }
+  
+  .legend-item:hover .legend-dot {
+    transform: scale(1.15);
+    box-shadow: 0 4px 16px rgba(251, 111, 146, 0.5);
+  }
+
+  .legend-density {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed var(--border);
+  }
+
+  .legend-density-title {
+    font-size: 8px;
+    font-weight: 700;
+    color: var(--primary-deep);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+  }
+
+  .density-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+    font-size: 9px;
+  }
+
+  .density-color {
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+  
+  @media (max-width: 900px) {
+    .main {
+      flex-direction: column;
+      padding: 8px;
+    }
+    .sidebar {
+      width: 100%;
+      max-height: 45vh;
+      height: auto !important;
+      border-radius: var(--radius);
+    }
+    .map-wrapper {
+      border-radius: var(--radius);
+      min-height: 55vh;
+    }
+  }
+  
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+  }
+  
+  .filter-btn.active .filter-dot {
+    animation: float 2s ease-in-out infinite;
+  }
+  
+  .leaflet-control-zoom {
+    border-radius: 12px !important;
+    overflow: hidden !important;
+    box-shadow: var(--shadow-soft) !important;
+    border: 2px solid var(--primary-light) !important;
+  }
+  
+  .leaflet-control-zoom a {
+    background: var(--surface) !important;
+    color: var(--primary-deep) !important;
+    width: 34px !important;
+    height: 34px !important;
+    line-height: 34px !important;
+    font-size: 17px !important;
+    font-weight: 700 !important;
+    transition: var(--transition-fast) !important;
+  }
+  
+  .leaflet-control-zoom a:hover {
+    background: var(--primary-soft) !important;
+    color: var(--primary-vibrant) !important;
+  }
+  
+  .leaflet-control-zoom-in {
+    border-bottom: 1px solid var(--primary-light) !important;
+  }
+  
+  .health-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .health-icon svg {
+    display: block;
+  }
+</style>
+</head>
+<body>
+ 
+<div class="main">
+  <div class="sidebar">
+    
+    <!-- Header -->
+    <div class="sidebar-header">
+      <div class="brand-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+        </svg>
+        HealthMap Medan
+      </div>
+      <div class="brand-subtitle">Temukan fasilitas kesehatan terdekat</div>
+    </div>
+    
+    <!-- Location Button -->
+    <div class="location-section">
+      <button class="location-btn" id="getLocationBtn" onclick="getUserLocation()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M12 2v4"/><path d="M12 18v4"/><path d="M2 12h4"/><path d="M18 12h4"/>
+        </svg>
+        <span id="locationBtnText">Temukan Lokasi Saya</span>
+      </button>
+      <div class="location-status" id="locationStatus"></div>
+    </div>
+    
+    <!-- Search -->
+    <div class="search-section">
+      <div class="section-label">Cari Fasilitas</div>
+      <div class="search-wrap">
+        <input type="text" id="searchInput" placeholder="Nama atau kecamatan...">
+        <span class="search-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"/>
+            <path d="m21 21-4.35-4.35"/>
+          </svg>
+        </span>
+      </div>
+    </div>
+    
+    <!-- Filter Dropdown -->
+    <div class="filter-section">
+      <div class="section-label">Filter Jenis</div>
+      <div class="filter-dropdown">
+        <div class="filter-dropdown-trigger" id="filterTrigger" onclick="toggleFilterDropdown()">
+          <span id="filterTriggerText">Semua Fasilitas</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </div>
+        <div class="filter-dropdown-content" id="filterDropdown">
+          <div class="filter-option active" data-type="all" onclick="selectFilter('all', this)">
+            <div class="filter-option-label">
+              <div class="filter-option-dot" style="background: linear-gradient(135deg, var(--primary-main), var(--primary-vibrant))"></div>
+              <span>Semua Fasilitas</span>
+            </div>
+            <span class="filter-option-count" id="count-all">0</span>
+          </div>
+          <div class="filter-option" data-type="Puskesmas" onclick="selectFilter('Puskesmas', this)">
+            <div class="filter-option-label">
+              <div class="filter-option-dot" style="background: linear-gradient(135deg, var(--puskesmas), #98d998)"></div>
+              <span>Puskesmas</span>
+            </div>
+            <span class="filter-option-count" id="count-filter-puskesmas">0</span>
+          </div>
+          <div class="filter-option" data-type="Klinik" onclick="selectFilter('Klinik', this)">
+            <div class="filter-option-label">
+              <div class="filter-option-dot" style="background: linear-gradient(135deg, var(--klinik), #87b8d9)"></div>
+              <span>Klinik</span>
+            </div>
+            <span class="filter-option-count" id="count-filter-klinik">0</span>
+          </div>
+          <div class="filter-option" data-type="RSU" onclick="selectFilter('RSU', this)">
+            <div class="filter-option-label">
+              <div class="filter-option-dot" style="background: linear-gradient(135deg, var(--rsu), #ff8a8a)"></div>
+              <span>Rumah Sakit</span>
+            </div>
+            <span class="filter-option-count" id="count-filter-rsu">0</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- List Area -->
+    <div class="sidebar-list-area">
+      <div class="list-section">
+        <div class="sort-section">
+          <div class="list-header">Daftar (<span id="list-count">0</span>)</div>
+          <button class="sort-btn" id="sortBtn" onclick="toggleSort()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 6h18"/><path d="M7 12h10"/><path d="M10 18h4"/>
+            </svg>
+            <span id="sortText">Urutkan</span>
+          </button>
+        </div>
+        <div class="list-wrap" id="faskesListEl"></div>
+      </div>
+    </div>
+    
+  </div>
+ 
+  <div class="map-wrapper">
+    <div id="map"></div>
+    <div class="legend-box">
+      <div class="legend-title">Legenda</div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background: linear-gradient(135deg, var(--puskesmas), #98d998)">
+          <svg viewBox="0 0 24 24" fill="white">
+            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-8 14H9v-4H5v-2h4V7h2v4h4v2h-4v4z"/>
+          </svg>
+        </div> 
+        <span>Puskesmas</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background: linear-gradient(135deg, var(--klinik), #87b8d9)">
+          <svg viewBox="0 0 24 24" fill="white">
+            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-1 16H6c-.55 0-1-.45-1-1V6c0-.55.45-1 1-1h12c.55 0 1 .45 1 1v12c0 .55-.45 1-1 1zm-4-4h-2v-2h-2v2H8v-2H6v-2h2V9h2v2h2V9h2v2h2v2h-2v2z"/>
+          </svg>
+        </div> 
+        <span>Klinik</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background: linear-gradient(135deg, var(--rsu), #ff8a8a)">
+          <svg viewBox="0 0 24 24" fill="white">
+            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-8 14H9v-4H5v-2h4V7h2v4h4v2h-4v4z"/>
+          </svg>
+        </div> 
+        <span>Rumah Sakit</span>
+      </div>
+      <div class="legend-item" style="margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--border);">
+        <div class="legend-dot" style="background: var(--route-color); box-shadow: 0 0 8px var(--route-glow);"></div> 
+        <span>Rute Navigasi</span>
+      </div>
+
+      <!-- Density Legend -->
+      <div class="legend-density">
+        <div class="legend-density-title">Kepadatan Penduduk</div>
+        <div class="density-legend-item">
+          <div class="density-color" style="background: var(--density-high)"></div>
+          <span>Padat (>10,000 jiwa/km²)</span>
+        </div>
+        <div class="density-legend-item">
+          <div class="density-color" style="background: var(--density-medium)"></div>
+          <span>Sedang (5,000-10,000)</span>
+        </div>
+        <div class="density-legend-item">
+          <div class="density-color" style="background: var(--density-low)"></div>
+          <span>Rendah (<5,000)</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+ 
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+// Data kepadatan penduduk per kecamatan
+const densityData = {
+  "Medan Kota": { population: 145234, area: 10.52, density: 13806, facilities: 4 },
+  "Medan Denai": { population: 132456, area: 14.23, density: 9308, facilities: 3 },
+  "Medan Area": { population: 98765, area: 7.85, density: 12582, facilities: 2 },
+  "Medan Perjuangan": { population: 87432, area: 11.34, density: 7711, facilities: 2 },
+  "Medan Timur": { population: 95123, area: 12.67, density: 7508, facilities: 2 },
+  "Medan Barat": { population: 76543, area: 8.92, density: 8582, facilities: 2 },
+  "Medan Baru": { population: 68234, area: 6.45, density: 10579, facilities: 3 },
+  "Medan Polonia": { population: 54321, area: 5.23, density: 10386, facilities: 2 },
+  "Medan Maimun": { population: 48765, area: 4.87, density: 10013, facilities: 2 },
+  "Medan Petisah": { population: 72456, area: 7.12, density: 10176, facilities: 4 },
+  "Medan Helvetia": { population: 112345, area: 15.34, density: 7324, facilities: 3 },
+  "Medan Sunggal": { population: 98234, area: 18.45, density: 5324, facilities: 3 },
+  "Medan Selayang": { population: 87654, area: 21.23, density: 4129, facilities: 3 },
+  "Medan Tuntungan": { population: 76543, area: 25.67, density: 2982, facilities: 2 },
+  "Medan Johor": { population: 92345, area: 16.89, density: 5468, facilities: 3 },
+  "Medan Amplas": { population: 89234, area: 13.45, density: 6635, facilities: 2 },
+  "Medan Tembung": { population: 78456, area: 19.23, density: 4080, facilities: 2 },
+  "Medan Belawan": { population: 65432, area: 32.45, density: 2016, facilities: 2 },
+  "Medan Labuhan": { population: 58765, area: 28.67, density: 2050, facilities: 2 },
+  "Medan Marelan": { population: 82345, area: 35.12, density: 2345, facilities: 2 },
+  "Medan Deli": { population: 71234, area: 22.34, density: 3189, facilities: 2 }
+};
+
+// GeoJSON sederhana untuk kecamatan (koordinat perkiraan)
+const kecamatanGeoJSON = {
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": { "kecamatan": "Medan Kota", "density": 13806 },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[98.6800, 3.5750], [98.6950, 3.5750], [98.6950, 3.5900], [98.6800, 3.5900], [98.6800, 3.5750]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "kecamatan": "Medan Denai", "density": 9308 },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[98.7100, 3.5600], [98.7400, 3.5600], [98.7400, 3.5850], [98.7100, 3.5850], [98.7100, 3.5600]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "kecamatan": "Medan Area", "density": 12582 },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[98.6900, 3.5700], [98.7150, 3.5700], [98.7150, 3.5900], [98.6900, 3.5900], [98.6900, 3.5700]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "kecamatan": "Medan Baru", "density": 10579 },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[98.6650, 3.5850], [98.6850, 3.5850], [98.6850, 3.6050], [98.6650, 3.6050], [98.6650, 3.5850]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "kecamatan": "Medan Petisah", "density": 10176 },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[98.6600, 3.5900], [98.6800, 3.5900], [98.6800, 3.6100], [98.6600, 3.6100], [98.6600, 3.5900]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "kecamatan": "Medan Helvetia", "density": 7324 },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[98.6300, 3.6100], [98.6600, 3.6100], [98.6600, 3.6400], [98.6300, 3.6400], [98.6300, 3.6100]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "kecamatan": "Medan Sunggal", "density": 5324 },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[98.6300, 3.5950], [98.6650, 3.5950], [98.6650, 3.6200], [98.6300, 3.6200], [98.6300, 3.5950]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "kecamatan": "Medan Selayang", "density": 4129 },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[98.6000, 3.5600], [98.6400, 3.5600], [98.6400, 3.5900], [98.6000, 3.5900], [98.6000, 3.5600]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "kecamatan": "Medan Tuntungan", "density": 2982 },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[98.5900, 3.5400], [98.6300, 3.5400], [98.6300, 3.5700], [98.5900, 3.5700], [98.5900, 3.5400]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "kecamatan": "Medan Johor", "density": 5468 },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[98.6700, 3.5400], [98.7100, 3.5400], [98.7100, 3.5750], [98.6700, 3.5750], [98.6700, 3.5400]]]
+      }
+    }
+  ]
+};
+
+const faskesList = [
+  { id:1, nama:"Puskesmas Medan Kota", jenis:"Puskesmas", kecamatan:"Medan Kota", alamat:"Jl. Serdang No.1, Medan Kota", lat:3.5820, lng:98.6880, layanan:"Rawat Jalan, KIA, Imunisasi, KB" },
+  { id:2, nama:"Puskesmas Medan Baru", jenis:"Puskesmas", kecamatan:"Medan Baru", alamat:"Jl. Sei Batang Serangan No.5", lat:3.5950, lng:98.6780, layanan:"Rawat Jalan, KIA, Gizi, Promkes" },
+  { id:3, nama:"Puskesmas Medan Helvetia", jenis:"Puskesmas", kecamatan:"Medan Helvetia", alamat:"Jl. Asrama No.7, Helvetia", lat:3.6240, lng:98.6420, layanan:"Rawat Jalan, Lansia, Imunisasi" },
+  { id:4, nama:"Puskesmas Sei Agul", jenis:"Puskesmas", kecamatan:"Medan Barat", alamat:"Jl. Sei Agul, Medan Barat", lat:3.5900, lng:98.6640, layanan:"Rawat Jalan, KIA, KB" },
+  { id:5, nama:"Puskesmas Medan Petisah", jenis:"Puskesmas", kecamatan:"Medan Petisah", alamat:"Jl. Petisah Tengah, Medan", lat:3.5990, lng:98.6710, layanan:"Rawat Jalan, Gigi, KIA" },
+  { id:6, nama:"Puskesmas Medan Sunggal", jenis:"Puskesmas", kecamatan:"Medan Sunggal", alamat:"Jl. Sunggal, Medan Sunggal", lat:3.6080, lng:98.6480, layanan:"Rawat Jalan, KIA, Imunisasi" },
+  { id:7, nama:"Puskesmas Medan Selayang", jenis:"Puskesmas", kecamatan:"Medan Selayang", alamat:"Jl. Jamin Ginting Km 12", lat:3.5740, lng:98.6230, layanan:"Rawat Jalan, KIA, Lansia" },
+  { id:8, nama:"Puskesmas Medan Tuntungan", jenis:"Puskesmas", kecamatan:"Medan Tuntungan", alamat:"Jl. Bunga Raya, Tuntungan", lat:3.5560, lng:98.6120, layanan:"Rawat Jalan, Imunisasi, KB" },
+  { id:9, nama:"Puskesmas Medan Johor", jenis:"Puskesmas", kecamatan:"Medan Johor", alamat:"Jl. Karya Jaya, Medan Johor", lat:3.5580, lng:98.6870, layanan:"Rawat Jalan, KIA, Gizi" },
+  { id:10, nama:"Puskesmas Medan Amplas", jenis:"Puskesmas", kecamatan:"Medan Amplas", alamat:"Jl. Amplas, Medan Amplas", lat:3.5440, lng:98.7020, layanan:"Rawat Jalan, Imunisasi, Lansia" },
+  { id:11, nama:"Puskesmas Medan Denai", jenis:"Puskesmas", kecamatan:"Medan Denai", alamat:"Jl. Denai, Medan Denai", lat:3.5710, lng:98.7280, layanan:"Rawat Jalan, KIA, TB" },
+  { id:12, nama:"Puskesmas Glugur Darat", jenis:"Puskesmas", kecamatan:"Medan Timur", alamat:"Jl. Glugur Darat, Medan Timur", lat:3.6010, lng:98.7080, layanan:"Rawat Jalan, KIA, Gizi, Imunisasi" },
+  { id:13, nama:"Puskesmas Bromo", jenis:"Puskesmas", kecamatan:"Medan Denai", alamat:"Jl. Bromo, Medan Denai", lat:3.5840, lng:98.7130, layanan:"Rawat Jalan, Lansia, TB" },
+  { id:14, nama:"Puskesmas Medan Area Selatan", jenis:"Puskesmas", kecamatan:"Medan Area", alamat:"Jl. Halat, Medan Area", lat:3.5780, lng:98.7010, layanan:"Rawat Jalan, KIA, KB" },
+  { id:15, nama:"Puskesmas Mandala", jenis:"Puskesmas", kecamatan:"Medan Tembung", alamat:"Jl. Mandala By Pass, Tembung", lat:3.5960, lng:98.7420, layanan:"Rawat Jalan, Gigi, Imunisasi" },
+  { id:16, nama:"Puskesmas Medan Perjuangan", jenis:"Puskesmas", kecamatan:"Medan Perjuangan", alamat:"Jl. Perjuangan, Medan", lat:3.6070, lng:98.7180, layanan:"Rawat Jalan, KIA, Gizi" },
+  { id:17, nama:"Puskesmas Medan Polonia", jenis:"Puskesmas", kecamatan:"Medan Polonia", alamat:"Jl. Polonia, Medan Polonia", lat:3.5740, lng:98.6680, layanan:"Rawat Jalan, KIA, Imunisasi" },
+  { id:18, nama:"Puskesmas Medan Maimun", jenis:"Puskesmas", kecamatan:"Medan Maimun", alamat:"Jl. Brigjen Katamso, Maimun", lat:3.5840, lng:98.6780, layanan:"Rawat Jalan, KIA, Lansia" },
+  { id:19, nama:"Puskesmas Belawan I", jenis:"Puskesmas", kecamatan:"Medan Belawan", alamat:"Jl. KL Yos Sudarso, Belawan", lat:3.7840, lng:98.6870, layanan:"Rawat Jalan, Gizi, Imunisasi" },
+  { id:20, nama:"Puskesmas Labuhan", jenis:"Puskesmas", kecamatan:"Medan Labuhan", alamat:"Jl. Yos Sudarso Km 20, Labuhan", lat:3.7210, lng:98.7020, layanan:"Rawat Jalan, KIA, KB" },
+  { id:21, nama:"Puskesmas Desa Martubung", jenis:"Puskesmas", kecamatan:"Medan Marelan", alamat:"Jl. Pasar I Martubung, Marelan", lat:3.7050, lng:98.6750, layanan:"Rawat Jalan, Imunisasi, Gizi" },
+  { id:22, nama:"Klinik Pratama Kasih Ibu", jenis:"Klinik", kecamatan:"Medan Selayang", alamat:"Jl. Jamin Ginting No.22", lat:3.5770, lng:98.6290, layanan:"Umum, KIA, Laboratorium" },
+  { id:23, nama:"Klinik Utama Graha Medika", jenis:"Klinik", kecamatan:"Medan Baru", alamat:"Jl. Pattimura No.11", lat:3.5920, lng:98.6760, layanan:"Umum, Spesialis, Radiologi" },
+  { id:24, nama:"Klinik Pratama Bunda", jenis:"Klinik", kecamatan:"Medan Sunggal", alamat:"Jl. Gatot Subroto No.44", lat:3.6140, lng:98.6530, layanan:"KIA, Umum, Imunisasi" },
+  { id:25, nama:"Klinik Azzahra Medical", jenis:"Klinik", kecamatan:"Medan Helvetia", alamat:"Jl. Kapten Muslim No.55", lat:3.6280, lng:98.6460, layanan:"Umum, Gigi, Lab" },
+  { id:26, nama:"Klinik Kimia Farma Sudirman", jenis:"Klinik", kecamatan:"Medan Petisah", alamat:"Jl. Jend. Sudirman No.1", lat:3.5960, lng:98.6720, layanan:"Umum, Apotek, Lab" },
+  { id:27, nama:"Klinik Pratama Sumber Sehat", jenis:"Klinik", kecamatan:"Medan Johor", alamat:"Jl. Karya Wisata No.3", lat:3.5620, lng:98.6830, layanan:"Umum, KIA, KB" },
+  { id:28, nama:"Klinik Utama Mandiri", jenis:"Klinik", kecamatan:"Medan Tembung", alamat:"Jl. Besar Tembung No.7", lat:3.5990, lng:98.7380, layanan:"Umum, Spesialis Anak" },
+  { id:29, nama:"Klinik Pratama Sejahtera", jenis:"Klinik", kecamatan:"Medan Denai", alamat:"Jl. Denai No.34", lat:3.5730, lng:98.7200, layanan:"Umum, Gigi, Lab" },
+  { id:30, nama:"Klinik 24 Jam Mutiara", jenis:"Klinik", kecamatan:"Medan Kota", alamat:"Jl. Mesjid No.9, Medan Kota", lat:3.5870, lng:98.6920, layanan:"UGD 24 Jam, Umum, Rawat Inap" },
+  { id:31, nama:"Klinik Pratama Kasih Setia", jenis:"Klinik", kecamatan:"Medan Perjuangan", alamat:"Jl. Tanah Merah No.12", lat:3.6100, lng:98.7230, layanan:"Umum, KIA, Imunisasi" },
+  { id:32, nama:"Klinik Anugerah Sehat", jenis:"Klinik", kecamatan:"Medan Amplas", alamat:"Jl. Sisingamangaraja No.100", lat:3.5480, lng:98.6990, layanan:"Umum, Gigi, Lab" },
+  { id:33, nama:"Klinik Pratama Harapan", jenis:"Klinik", kecamatan:"Medan Belawan", alamat:"Jl. Belawan No.5", lat:3.7790, lng:98.6810, layanan:"Umum, KIA, KB" },
+  { id:34, nama:"Klinik Pratama Mitra Husada", jenis:"Klinik", kecamatan:"Medan Marelan", alamat:"Jl. Marelan Raya No.20", lat:3.7080, lng:98.6690, layanan:"Umum, Lab, Imunisasi" },
+  { id:35, nama:"Klinik Pratama Polonia Sehat", jenis:"Klinik", kecamatan:"Medan Polonia", alamat:"Jl. Abdullah Lubis No.8", lat:3.5800, lng:98.6620, layanan:"Umum, KIA, Apotek" },
+  { id:36, nama:"Klinik Pratama Al-Fatah", jenis:"Klinik", kecamatan:"Medan Maimun", alamat:"Jl. Sutoyo No.15, Maimun", lat:3.5810, lng:98.6740, layanan:"Umum, Gigi, KB" },
+  { id:37, nama:"RSUP H. Adam Malik", jenis:"RSU", kecamatan:"Medan Tuntungan", alamat:"Jl. Bunga Lau No.17, Medan", lat:3.5670, lng:98.6170, layanan:"RS Kelas A · Rujukan Nasional · Semua Spesialisasi" },
+  { id:38, nama:"RSUD dr. Pirngadi Medan", jenis:"RSU", kecamatan:"Medan Kota", alamat:"Jl. Prof. H.M. Yamin SH No.47", lat:3.5860, lng:98.6930, layanan:"RS Kelas B · Bedah, Penyakit Dalam, Anak, Kandungan" },
+  { id:39, nama:"RS Columbia Asia Medan", jenis:"RSU", kecamatan:"Medan Selayang", alamat:"Jl. Listrik No.2 A, Medan", lat:3.5950, lng:98.6650, layanan:"RS Swasta Kelas B · Umum & Spesialis" },
+  { id:40, nama:"RS Grand Medistra", jenis:"RSU", kecamatan:"Medan Johor", alamat:"Jl. Karya Jaya No.6, Medan Johor", lat:3.5520, lng:98.6900, layanan:"RS Swasta · Bedah, Jantung, Saraf" },
+  { id:41, nama:"RS Advent Medan", jenis:"RSU", kecamatan:"Medan Baru", alamat:"Jl. Gatot Subroto Km 4, Medan", lat:3.5870, lng:98.6710, layanan:"RS Swasta Kelas C · Umum & Spesialis" },
+  { id:42, nama:"RS Royal Prima", jenis:"RSU", kecamatan:"Medan Petisah", alamat:"Jl. Ayahanda No.68 A, Medan", lat:3.6020, lng:98.6760, layanan:"RS Swasta Kelas B · Semua Spesialisasi" },
+  { id:43, nama:"RS Mitra Sejati", jenis:"RSU", kecamatan:"Medan Sunggal", alamat:"Jl. Tali Air No.6, Medan", lat:3.6100, lng:98.6550, layanan:"RS Swasta Kelas C · Bedah, Penyakit Dalam" },
+  { id:44, nama:"RS Martha Friska Brayan", jenis:"RSU", kecamatan:"Medan Barat", alamat:"Jl. Kol. Bejo No.37, Medan Barat", lat:3.5870, lng:98.6590, layanan:"RS Swasta · Kebidanan, Anak, Bedah" },
+  { id:45, nama:"RS Bhayangkara Tingkat II", jenis:"RSU", kecamatan:"Medan Polonia", alamat:"Jl. KH. Wahid Hasyim No.1", lat:3.5780, lng:98.6670, layanan:"RS TNI/Polri · Umum & Spesialis" },
+  { id:46, nama:"RS Putri Hijau RSAD", jenis:"RSU", kecamatan:"Medan Helvetia", alamat:"Jl. Putri Hijau No.17, Medan", lat:3.5990, lng:98.6720, layanan:"RS TNI AD · Umum & Spesialis" },
+  { id:47, nama:"RS Herna Medan", jenis:"RSU", kecamatan:"Medan Petisah", alamat:"Jl. Majapahit No.118 A, Medan", lat:3.5940, lng:98.6800, layanan:"RS Swasta Kelas C · Umum & Spesialis" },
+  { id:48, nama:"RS Bina Kasih", jenis:"RSU", kecamatan:"Medan Sunggal", alamat:"Jl. Jend. Gatot Subroto No.15 B", lat:3.6060, lng:98.6500, layanan:"RS Swasta · Bedah, Jantung, Saraf" },
+  { id:49, nama:"RS Malahayati", jenis:"RSU", kecamatan:"Medan Helvetia", alamat:"Jl. Diponegoro No.2-4, Medan", lat:3.6040, lng:98.6620, layanan:"RS Swasta Kelas C · Umum & Spesialis" },
+  { id:50, nama:"RS Permata Bunda", jenis:"RSU", kecamatan:"Medan Petisah", alamat:"Jl. Sisingamangaraja No.7", lat:3.5980, lng:98.6690, layanan:"RS Swasta · Kebidanan, Anak" },
+];
+ 
+const map = L.map('map', { 
+  center: [3.5952, 98.6722], 
+  zoom: 12, 
+  zoomControl: false,
+  attributionControl: false
+});
+
+L.control.zoom({ position: 'topleft' }).addTo(map);
+ 
+L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+  attribution: 'HealthMap Medan',
+  maxZoom: 19
+}).addTo(map);
+ 
+setTimeout(() => map.invalidateSize(), 300);
+
+// Tambahkan polygon kepadatan
+function getDensityColor(density) {
+  if (density > 10000) return 'var(--density-high)';
+  if (density > 5000) return 'var(--density-medium)';
+  return 'var(--density-low)';
+}
+
+function getDensityLevel(density) {
+  if (density > 10000) return 'Padat';
+  if (density > 5000) return 'Sedang';
+  return 'Rendah';
+}
+
+function getDensityClass(density) {
+  if (density > 10000) return 'density-high';
+  if (density > 5000) return 'density-medium';
+  return 'density-low';
+}
+
+// Render polygon kecamatan
+L.geoJSON(kecamatanGeoJSON, {
+  style: function(feature) {
+    return {
+      fillColor: getDensityColor(feature.properties.density),
+      weight: 1,
+      opacity: 0.6,
+      color: 'white',
+      dashArray: '3',
+      fillOpacity: 0.4
+    };
+  },
+  onEachFeature: function(feature, layer) {
+    layer.bindPopup(`
+      <div style="padding:10px;min-width:200px;">
+        <h3 style="margin:0 0 10px 0;font-size:14px;color:var(--primary-deep);">${feature.properties.kecamatan}</h3>
+        <div style="font-size:12px;color:var(--text-muted);">
+          <div style="margin-bottom:5px;"><strong>Kepadatan:</strong> ${feature.properties.density.toLocaleString('id-ID')} jiwa/km²</div>
+          <div><strong>Status:</strong> <span class="density-badge ${getDensityClass(feature.properties.density)}">${getDensityLevel(feature.properties.density)}</span></div>
+        </div>
+      </div>
+    `);
+  }
+}).addTo(map);
+
+let userLocation = null;
+let userMarker = null;
+let userAccuracyCircle = null;
+let routeLine = null;
+let sortByDistance = false;
+ 
+function calculateDistance(lat1, lng1, lat2, lng2) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = 
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+    Math.sin(dLng/2) * Math.sin(dLng/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
+}
+
+function formatDistance(km) {
+  if (km < 1) return `${Math.round(km * 1000)} m`;
+  return `${km.toFixed(1)} km`;
+}
+
+// 🔧 FUNGSI getUserLocation YANG SUDAH DIPERBAIKI
+function getUserLocation() {
+  const btn = document.getElementById('getLocationBtn');
+  const btnText = document.getElementById('locationBtnText');
+  const status = document.getElementById('locationStatus');
+  
+  if (!navigator.geolocation) {
+    status.textContent = 'Geolocation tidak didukung';
+    status.className = 'location-status error';
+    return;
+  }
+  
+  btn.classList.add('loading');
+  btnText.textContent = 'Mendeteksi...';
+  status.textContent = '';
+  
+  navigator.geolocation.getCurrentPosition(
+    (position) => {
+      userLocation = {
+        lat: position.coords.latitude,
+        lng: position.coords.longitude,
+        accuracy: position.coords.accuracy
+      };
+      
+      // Hapus marker & accuracy circle lama
+      if (userMarker) map.removeLayer(userMarker);
+      if (userAccuracyCircle) map.removeLayer(userAccuracyCircle);
+      
+      // Tambah marker lokasi user
+      userMarker = L.marker([userLocation.lat, userLocation.lng], {
+        icon: L.divIcon({
+          html: `<div style="width:22px;height:22px;background:linear-gradient(135deg,#fb6f92,#c9184a);border-radius:50%;border:3px solid white;box-shadow:0 0 0 4px rgba(251,111,146,0.3),0 4px 16px rgba(201,24,74,0.4);animation:pulse 2s infinite;"></div><style>@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}</style>`,
+          className: '',
+          iconSize: [22, 22],
+          iconAnchor: [11, 11]
+        })
+      }).addTo(map);
+      
+      // Tambah circle akurasi (visualisasi radius ketidakpastian) - seperti Google Maps
+      userAccuracyCircle = L.circle([userLocation.lat, userLocation.lng], {
+        radius: userLocation.accuracy,
+        color: '#fb6f92',
+        fillColor: '#fb6f92',
+        fillOpacity: 0.15,
+        weight: 1,
+        opacity: 0.4
+      }).addTo(map);
+      
+      // Zoom ke lokasi user
+      map.flyTo([userLocation.lat, userLocation.lng], 14, { duration: 1.5 });
+      
+      // Update UI dengan info akurasi
+      btnText.textContent = 'Lokasi Ditemukan';
+      btn.classList.remove('loading');
+      
+      let accuracyMsg = `Akurasi: ±${Math.round(userLocation.accuracy)}m`;
+      if (userLocation.accuracy > 100) {
+        accuracyMsg += ' ⚠️ Kurang akurat (coba di luar ruangan)';
+        status.className = 'location-status error';
+      } else if (userLocation.accuracy > 50) {
+        accuracyMsg += ' ⚡ Cukup akurat';
+        status.className = 'location-status success';
+      } else {
+        accuracyMsg += ' ✅ Sangat akurat';
+        status.className = 'location-status success';
+      }
+      status.textContent = accuracyMsg;
+      
+      // Update jarak ke semua faskes
+      updateAllDistances();
+      
+    },
+    (error) => {
+      btn.classList.remove('loading');
+      btnText.textContent = 'Gunakan Lokasi Saya';
+      
+      switch(error.code) {
+        case error.PERMISSION_DENIED:
+          status.textContent = 'Izin lokasi ditolak. Klik ikon 🔒 di address bar untuk mengizinkan.';
+          break;
+        case error.POSITION_UNAVAILABLE:
+          status.textContent = 'Lokasi tidak tersedia. Pastikan GPS aktif.';
+          break;
+        case error.TIMEOUT:
+          status.textContent = 'Waktu habis. Coba lagi dengan sinyal lebih baik.';
+          break;
+        default:
+          status.textContent = 'Error tidak diketahui';
+      }
+      status.className = 'location-status error';
+    },
+    { 
+      enableHighAccuracy: true,  // Paksa GPS, bukan IP-based
+      timeout: 15000,            // Tambah waktu tunggu (15 detik)
+      maximumAge: 0              // JANGAN pakai cache, selalu ambil lokasi baru!
+    }
+  );
+}
+
+// ✨ FUNGSI OPSIONAL: Pantau pergerakan user secara real-time (seperti Google Maps)
+function watchUserLocation() {
+  if (!navigator.geolocation) return null;
+  
+  return navigator.geolocation.watchPosition(
+    (position) => {
+      userLocation = {
+        lat: position.coords.latitude,
+        lng: position.coords.longitude,
+        accuracy: position.coords.accuracy
+      };
+      
+      // Update marker & circle jika sudah ada
+      if (userMarker) {
+        userMarker.setLatLng([userLocation.lat, userLocation.lng]);
+      }
+      if (userAccuracyCircle) {
+        userAccuracyCircle.setLatLng([userLocation.lat, userLocation.lng]);
+        userAccuracyCircle.setRadius(userLocation.accuracy);
+      }
+      
+      // Update jarak & daftar jika sedang sort by distance
+      if (sortByDistance) updateAllDistances();
+      
+    },
+    (error) => console.warn('Watch position error:', error),
+    { 
+      enableHighAccuracy: true, 
+      timeout: 10000, 
+      maximumAge: 0 
+    }
+  );
+}
+
+function toggleSort() {
+  sortByDistance = !sortByDistance;
+  const sortBtn = document.getElementById('sortBtn');
+  const sortText = document.getElementById('sortText');
+  
+  if (sortByDistance && userLocation) {
+    sortBtn.classList.add('active');
+    sortText.textContent = 'Jarak Terdekat';
+  } else {
+    sortBtn.classList.remove('active');
+    sortText.textContent = 'Urutkan';
+  }
+  
+  updateVisibility();
+}
+
+function updateAllDistances() {
+  if (!userLocation) return;
+  
+  faskesList.forEach(f => {
+    f.distance = calculateDistance(
+      userLocation.lat, userLocation.lng,
+      f.lat, f.lng
+    );
+  });
+  
+  if (sortByDistance) {
+    updateVisibility();
+  }
+}
+
+function toggleFilterDropdown() {
+  const dropdown = document.getElementById('filterDropdown');
+  const trigger = document.getElementById('filterTrigger');
+  dropdown.classList.toggle('show');
+  trigger.classList.toggle('active');
+}
+
+function selectFilter(type, element) {
+  currentFilter = type;
+  
+  document.querySelectorAll('.filter-option').forEach(opt => opt.classList.remove('active'));
+  element.classList.add('active');
+  
+  const labelText = element.querySelector('.filter-option-label span').textContent;
+  document.getElementById('filterTriggerText').textContent = labelText;
+  
+  document.getElementById('filterDropdown').classList.remove('show');
+  document.getElementById('filterTrigger').classList.remove('active');
+  
+  updateVisibility();
+}
+
+async function drawRouteLine(fromLat, fromLng, toLat, toLng) {
+  if (routeLine) {
+    map.removeLayer(routeLine);
+  }
+  
+  try {
+    const response = await fetch(
+      `https://router.project-osrm.org/route/v1/driving/${fromLng},${fromLat};${toLng},${toLat}?overview=full&geometries=geojson`
+    );
+    
+    const data = await response.json();
+    
+    if (data.routes && data.routes.length > 0) {
+      const route = data.routes[0];
+      const coordinates = route.geometry.coordinates;
+      
+      const latLngs = coordinates.map(coord => [coord[1], coord[0]]);
+      
+      routeLine = L.polyline(latLngs, {
+        color: '#4ade80',
+        weight: 5,
+        opacity: 0.8,
+        lineCap: 'round',
+        lineJoin: 'round',
+        dashArray: '10, 6'
+      }).addTo(map);
+      
+      const style = document.createElement('style');
+      style.textContent = `
+        @keyframes dash {
+          to { stroke-dashoffset: -16; }
+        }
+        .leaflet-pane .leaflet-interactive {
+          animation: dash 1s linear infinite;
+        }
+      `;
+      document.head.appendChild(style);
+    }
+  } catch (error) {
+    console.error('Error getting route:', error);
+    routeLine = L.polyline(
+      [[fromLat, fromLng], [toLat, toLng]],
+      {
+        color: '#4ade80',
+        weight: 4,
+        opacity: 0.9,
+        dashArray: '10, 8'
+      }
+    ).addTo(map);
+  }
+}
+
+function clearRouteLine() {
+  if (routeLine) {
+    map.removeLayer(routeLine);
+    routeLine = null;
+  }
+}
+
+function makeRSUIcon() {
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="42" height="54" viewBox="0 0 42 54">
+      <defs>
+        <linearGradient id="rsuGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#ffadad"/>
+          <stop offset="100%" style="stop-color:#ff8a8a"/>
+        </linearGradient>
+        <filter id="rsuShadow" x="-50%" y="-50%" width="200%" height="200%">
+          <feDropShadow dx="0" dy="4" stdDeviation="4" flood-opacity="0.35"/>
+        </filter>
+      </defs>
+      <path d="M21 2 C11.5 2 4.5 9 4.5 19 C4.5 33 21 50 21 50 C21 50 37.5 33 37.5 19 C37.5 9 30.5 2 21 2 Z" 
+            fill="url(#rsuGrad)" stroke="white" stroke-width="2.5" filter="url(#rsuShadow)"/>
+      <circle cx="21" cy="19" r="10" fill="white" opacity="0.95"/>
+      <g transform="translate(13, 11)">
+        <rect x="2" y="3" width="11" height="8" rx="1" fill="#c9184a"/>
+        <rect x="4" y="0" width="7" height="3" rx="0.5" fill="#c9184a"/>
+        <rect x="5.5" y="4.5" width="4" height="4.5" fill="white"/>
+        <rect x="4" y="6" width="7" height="1.5" fill="white"/>
+      </g>
+      <text x="21" y="49" text-anchor="middle" fill="#c9184a" font-size="7.5" font-weight="700" font-family="DM Sans, sans-serif">RS</text>
+    </svg>`;
+  return L.divIcon({ 
+    html: svg, 
+    className: '', 
+    iconSize: [42,54], 
+    iconAnchor: [21,50], 
+    popupAnchor: [0,-50] 
+  });
+}
+
+function makeKlinikIcon() {
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="38" height="50" viewBox="0 0 38 50">
+      <defs>
+        <linearGradient id="klinikGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#a7c7e7"/>
+          <stop offset="100%" style="stop-color:#87b8d9"/>
+        </linearGradient>
+        <filter id="klinikShadow" x="-50%" y="-50%" width="200%" height="200%">
+          <feDropShadow dx="0" dy="3" stdDeviation="3" flood-opacity="0.3"/>
+        </filter>
+      </defs>
+      <path d="M19 2 C10.5 2 4 8.5 4 17.5 C4 30 19 46 19 46 C19 46 34 30 34 17.5 C34 8.5 27.5 2 19 2 Z" 
+            fill="url(#klinikGrad)" stroke="white" stroke-width="2.5" filter="url(#klinikShadow)"/>
+      <circle cx="19" cy="17.5" r="9.5" fill="white" opacity="0.95"/>
+      <g transform="translate(11, 9.5)">
+        <rect x="1" y="2" width="13" height="9" rx="1.3" fill="#4a7ba7"/>
+        <rect x="3" y="0" width="9" height="2.5" rx="0.5" fill="#4a7ba7"/>
+        <circle cx="7.5" cy="6.5" r="2.8" fill="white"/>
+        <rect x="6" y="5" width="3" height="3" fill="#4a7ba7"/>
+      </g>
+      <text x="19" y="45" text-anchor="middle" fill="#4a7ba7" font-size="6.5" font-weight="600" font-family="DM Sans, sans-serif">Klinik</text>
+    </svg>`;
+  return L.divIcon({ 
+    html: svg, 
+    className: '', 
+    iconSize: [38,50], 
+    iconAnchor: [19,46], 
+    popupAnchor: [0,-46] 
+  });
+}
+
+function makePuskesmasIcon() {
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="52" viewBox="0 0 40 52">
+      <defs>
+        <linearGradient id="pkmsGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#b8e6b8"/>
+          <stop offset="100%" style="stop-color:#98d998"/>
+        </linearGradient>
+        <filter id="pkmsShadow" x="-50%" y="-50%" width="200%" height="200%">
+          <feDropShadow dx="0" dy="3" stdDeviation="3" flood-opacity="0.3"/>
+        </filter>
+      </defs>
+      <path d="M20 2 C11 2 4 9 4 18.5 C4 31 20 48 20 48 C20 48 36 31 36 18.5 C36 9 29 2 20 2 Z" 
+            fill="url(#pkmsGrad)" stroke="white" stroke-width="2.5" filter="url(#pkmsShadow)"/>
+      <circle cx="20" cy="18.5" r="10" fill="white" opacity="0.95"/>
+      <g transform="translate(12, 10.5)">
+        <rect x="5.5" y="0" width="3.5" height="15" rx="0.8" fill="#4a7c4a"/>
+        <rect x="0" y="5.5" width="15" height="3.5" rx="0.8" fill="#4a7c4a"/>
+        <circle cx="7.5" cy="7.5" r="8" fill="none" stroke="#98d998" stroke-width="1.3" stroke-dasharray="2,2"/>
+      </g>
+      <text x="20" y="47" text-anchor="middle" fill="#4a7c4a" font-size="7" font-weight="700" font-family="DM Sans, sans-serif">PKM</text>
+    </svg>`;
+  return L.divIcon({ 
+    html: svg, 
+    className: '', 
+    iconSize: [40,52], 
+    iconAnchor: [20,48], 
+    popupAnchor: [0,-48] 
+  });
+}
+ 
+const icons = { 
+  Puskesmas: makePuskesmasIcon(), 
+  Klinik: makeKlinikIcon(), 
+  RSU: makeRSUIcon() 
+};
+
+const colors = {
+  Puskesmas: { bg: 'linear-gradient(135deg, rgba(184,230,184,0.25), rgba(152,217,152,0.15))', color: '#4a7c4a', border: '#b8e6b8', icon: '#4a7c4a' },
+  Klinik: { bg: 'linear-gradient(135deg, rgba(167,199,231,0.25), rgba(135,184,217,0.15))', color: '#4a7ba7', border: '#a7c7e7', icon: '#4a7ba7' },
+  RSU: { bg: 'linear-gradient(135deg, rgba(255,173,173,0.25), rgba(255,138,138,0.15))', color: '#c9184a', border: '#ffadad', icon: '#c9184a' }
+};
+
+const svgIcons = {
+  puskesmas: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-8 14H9v-4H5v-2h4V7h2v4h4v2h-4v4z"/></svg>`,
+  klinik: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-1 16H6c-.55 0-1-.45-1-1V6c0-.55.45-1 1-1h12c.55 0 1 .45 1 1v12c0 .55-.45 1-1 1zm-4-4h-2v-2h-2v2H8v-2H6v-2h2V9h2v2h2V9h2v2h2v2h-2v2z"/></svg>`,
+  rsu: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z"/></svg>`,
+  location: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>`,
+  building: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4"/><path d="M9 9v.01M9 12v.01M9 15v.01M9 18v.01"/></svg>`,
+  services: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>`,
+  distance: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M2 12h20"/></svg>`,
+  search: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>`,
+  dropdown: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>`,
+  sort: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M7 12h10"/><path d="M10 18h4"/></svg>`,
+  sortUp: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7-7 7 7"/></svg>`,
+  sortDown: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7 7 7-7"/></svg>`,
+  route: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>`
+};
+ 
+let currentFilter = 'all', currentSearch = '', markers = {}, selectedId = null;
+ 
+function getIconSvg(jenis) {
+  return svgIcons[jenis === 'Puskesmas' ? 'puskesmas' : jenis === 'Klinik' ? 'klinik' : 'rsu'];
+}
+
+function getAnalysis(kecamatan) {
+  const data = densityData[kecamatan];
+  if (!data) return { status: 'Tidak Diketahui', class: '' };
+  
+  const ratio = data.population / data.facilities;
+  
+  if (ratio <= 30000) {
+    return { status: 'Sesuai (1:' + Math.round(ratio/1000) + 'k)', class: 'analysis-sesuai' };
+  } else {
+    return { status: 'Tidak Sesuai (1:' + Math.round(ratio/1000) + 'k)', class: 'analysis-tidak-sesuai' };
+  }
+}
+ 
+function popupHtml(f) {
+  const c = colors[f.jenis];
+  const iconSvg = getIconSvg(f.jenis);
+  const density = densityData[f.kecamatan];
+  const analysis = getAnalysis(f.kecamatan);
+  
+  let distanceHtml = '';
+  if (userLocation && f.distance !== undefined) {
+    distanceHtml = `<div class="popup-distance">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12h20"/></svg>
+      ${formatDistance(f.distance)} dari lokasi Anda
+    </div>`;
+  }
+
+  let densityHtml = '';
+  if (density) {
+    densityHtml = `
+      <div class="popup-density">
+        <div class="popup-density-title">📊 Kepadatan Penduduk</div>
+        <div class="density-stat">
+          <span class="density-stat-label">Kepadatan:</span>
+          <span class="density-stat-value">${density.density.toLocaleString('id-ID')} jiwa/km²</span>
+        </div>
+        <div class="density-stat">
+          <span class="density-stat-label">Penduduk:</span>
+          <span class="density-stat-value">${density.population.toLocaleString('id-ID')} jiwa</span>
+        </div>
+        <div class="density-stat">
+          <span class="density-stat-label">Status:</span>
+          <span class="density-badge ${getDensityClass(density.density)}">${getDensityLevel(density.density)}</span>
+        </div>
+        <div class="analysis-box ${analysis.class}">
+          ${analysis.status}
+        </div>
+      </div>
+    `;
+  }
+  
+  return `<div class="popup-inner">
+    <span class="popup-type-badge">
+      <span class="health-icon">${iconSvg}</span>
+      ${f.jenis.toUpperCase()}
+    </span>
+    <div class="popup-name">${f.nama}</div>
+    <div class="popup-detail">
+      <span class="popup-detail-icon health-icon">${svgIcons.location}</span>
+      <span>${f.alamat}</span>
+    </div>
+    <div class="popup-detail">
+      <span class="popup-detail-icon health-icon">${svgIcons.building}</span>
+      <span>Kec. ${f.kecamatan}</span>
+    </div>
+    <div class="popup-detail">
+      <span class="popup-detail-icon health-icon">${svgIcons.services}</span>
+      <span>${f.layanan}</span>
+    </div>
+    ${densityHtml}
+    ${distanceHtml}
+  </div>`;
+}
+ 
+function renderMarkers() {
+  faskesList.forEach(f => {
+    if (markers[f.id]) map.removeLayer(markers[f.id]);
+    const m = L.marker([f.lat, f.lng], { icon: icons[f.jenis], riseOnHover: true })
+      .bindPopup(popupHtml(f), { maxWidth: 320, minWidth: 260, closeButton: true });
+    m.addTo(map);
+    m.on('click', () => selectItem(f.id));
+    m.on('mouseover', function() {
+      this.openPopup();
+    });
+    markers[f.id] = m;
+  });
+}
+ 
+function getFiltered() {
+  let filtered = faskesList.filter(f => {
+    const matchType = currentFilter === 'all' || f.jenis === currentFilter;
+    const q = currentSearch.toLowerCase();
+    return matchType && (!q || f.nama.toLowerCase().includes(q) || f.kecamatan.toLowerCase().includes(q));
+  });
+  
+  if (sortByDistance && userLocation) {
+    filtered.sort((a, b) => (a.distance || 999) - (b.distance || 999));
+  }
+  
+  return filtered;
+}
+ 
+function updateVisibility() {
+  const filtered = getFiltered();
+  const filteredIds = new Set(filtered.map(f => f.id));
+  
+  faskesList.forEach(f => {
+    if (!markers[f.id]) return;
+    if (filteredIds.has(f.id)) { 
+      if (!map.hasLayer(markers[f.id])) markers[f.id].addTo(map); 
+    } else { 
+      if (map.hasLayer(markers[f.id])) map.removeLayer(markers[f.id]); 
+    }
+  });
+  renderList(filtered);
+}
+ 
+function renderList(items) {
+  const el = document.getElementById('faskesListEl');
+  document.getElementById('list-count').textContent = items.length;
+  
+  if (!items.length) { 
+    el.innerHTML = '<div class="no-result">Tidak ada fasilitas ditemukan<br><small style="display:block;margin-top:6px">Coba kata kunci lain</small></div>'; 
+    return; 
+  }
+  
+  el.innerHTML = items.map(f => {
+    const c = colors[f.jenis];
+    const iconKey = f.jenis === 'Puskesmas' ? 'puskesmas' : f.jenis === 'Klinik' ? 'klinik' : 'rsu';
+    
+    let distanceHtml = '';
+    if (userLocation && f.distance !== undefined) {
+      distanceHtml = `<span class="item-distance">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12h20"/></svg>
+        ${formatDistance(f.distance)}
+      </span>`;
+    }
+    
+    return `<div class="faskes-item${f.id === selectedId ? ' selected' : ''}" onclick="selectItem(${f.id})">
+      <div class="item-name">
+        <span class="health-icon" style="color:${c.icon};margin-right:3px;vertical-align:middle">${svgIcons[iconKey]}</span>
+        ${f.nama}
+      </div>
+      <div class="item-meta">
+        <span class="item-badge" style="background:${c.bg}; color:${c.color}; border-color:${c.border}">
+          <span class="health-icon">${svgIcons[iconKey]}</span>
+          ${f.jenis}
+        </span>
+        <span><span class="health-icon" style="color:var(--primary-vibrant);width:11px;height:11px;display:inline-flex;vertical-align:middle;margin-right:2px">${svgIcons.building}</span>${f.kecamatan}</span>
+        ${distanceHtml}
+      </div>
+    </div>`;
+  }).join('');
+}
+ 
+function updateCounts() {
+  const all = faskesList;
+  const puskesmasCount = all.filter(f=>f.jenis==='Puskesmas').length;
+  const klinikCount = all.filter(f=>f.jenis==='Klinik').length;
+  const rsuCount = all.filter(f=>f.jenis==='RSU').length;
+  
+  document.getElementById('count-all').textContent = all.length;
+  document.getElementById('count-filter-puskesmas').textContent = puskesmasCount;
+  document.getElementById('count-filter-klinik').textContent = klinikCount;
+  document.getElementById('count-filter-rsu').textContent = rsuCount;
+}
+ 
+function setFilter(type, btn) {
+  currentFilter = type;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  updateVisibility();
+}
+ 
+function selectItem(id) {
+  selectedId = id;
+  const f = faskesList.find(x => x.id === id);
+  if (!f) return;
+  
+  if (!map.hasLayer(markers[id])) markers[id].addTo(map);
+  map.flyTo([f.lat, f.lng], 16, { duration: 1, easeLinearity: 0.25 });
+  
+  if (userLocation) {
+    drawRouteLine(
+      userLocation.lat, userLocation.lng,
+      f.lat, f.lng
+    );
+  }
+  
+  setTimeout(() => {
+    if (markers[id]) markers[id].openPopup();
+  }, 1000);
+  
+  updateVisibility();
+  const el = document.querySelector(`.faskes-item[onclick="selectItem(${id})"]`);
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+ 
+document.getElementById('searchInput').addEventListener('input', e => {
+  currentSearch = e.target.value;
+  updateVisibility();
+});
+
+document.addEventListener('click', function(e) {
+  const dropdown = document.querySelector('.filter-dropdown');
+  const trigger = document.getElementById('filterTrigger');
+  if (!dropdown.contains(e.target)) {
+    document.getElementById('filterDropdown').classList.remove('show');
+    trigger.classList.remove('active');
+  }
+});
+
+map.on('click', function() {
+  // clearRouteLine();
+});
+ 
+renderMarkers();
+updateCounts();
+updateVisibility();
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelector('.sidebar').style.opacity = '0';
+  document.querySelector('.sidebar').style.transform = 'translateX(-20px)';
+  setTimeout(() => {
+    document.querySelector('.sidebar').style.transition = 'all 0.5s ease';
+    document.querySelector('.sidebar').style.opacity = '1';
+    document.querySelector('.sidebar').style.transform = 'translateX(0)';
+  }, 100);
+  
+  // ✨ Opsional: Aktifkan tracking real-time seperti Google Maps (uncomment jika ingin)
+   watchUserLocation();
+});
+</script>
+</body>
+</html>
